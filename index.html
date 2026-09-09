@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eBay Automation & Bulk Seller Suite</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            },
+            dark: {
+              bg: '#0b0f17',
+              card: '#131b2e',
+              border: '#1e293b',
+              input: '#0f172a'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Fira Code', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    body {
+      background-color: #0b0f17;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    .terminal-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+
+    .glass-panel {
+      background: rgba(19, 27, 46, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .active-tab {
+      background-color: #1e293b;
+      color: #818cf8;
+      border-bottom: 2px solid #6366f1;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-gray-800 bg-slate-900/80 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Brand Logo & Title -->
+        <div class="flex items-center space-x-3">
+          <div class="p-2 bg-gradient-to-tr from-brand-600 to-indigo-500 rounded-xl shadow-lg shadow-brand-500/20">
+            <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="text-lg font-bold text-white tracking-tight">eBay Automation Suite</h1>
+              <span class="px-2 py-0.5 text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-full">Pro Seller</span>
+            </div>
+            <p class="text-xs text-gray-400">Bulk Listing & Custom Product Automation Engine</p>
+          </div>
+        </div>
+
+        <!-- Status & Active Scheduler Indicator -->
+        <div class="flex items-center space-x-4">
+          <div id="scheduler-badge" class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-800/80 border border-gray-700 text-gray-400">
+            <span id="scheduler-pulse" class="w-2 h-2 rounded-full bg-gray-500"></span>
+            <span id="scheduler-status-text">Scheduler Idle</span>
+          </div>
+          <button onclick="openModal('add-product-modal')" class="inline-flex items-center space-x-2 px-3.5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium text-sm transition shadow-md shadow-brand-600/20 active:scale-95">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Add Product</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex space-x-1 border-t border-gray-800/60 pt-1 overflow-x-auto text-sm font-medium">
+        <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-gray-400 hover:text-white transition rounded-t-lg active-tab">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+          <span>Product Catalog</span>
+        </button>
+        <button onclick="switchTab('importer')" id="tab-btn-importer" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-gray-400 hover:text-white transition rounded-t-lg">
+          <i data-lucide="file-up" class="w-4 h-4"></i>
+          <span>CSV Bulk Import</span>
+        </button>
+        <button onclick="switchTab('validator')" id="tab-btn-validator" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-gray-400 hover:text-white transition rounded-t-lg">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span>Marketplace Validator</span>
+        </button>
+        <button onclick="switchTab('json')" id="tab-btn-json" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-gray-400 hover:text-white transition rounded-t-lg">
+          <i data-lucide="code" class="w-4 h-4"></i>
+          <span>eBay JSON Schema</span>
+        </button>
+        <button onclick="switchTab('scheduler')" id="tab-btn-scheduler" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-gray-400 hover:text-white transition rounded-t-lg">
+          <i data-lucide="clock" class="w-4 h-4"></i>
+          <span>Listing Scheduler</span>
+        </button>
+        <button onclick="switchTab('fastapi')" id="tab-btn-fastapi" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-gray-400 hover:text-white transition rounded-t-lg">
+          <i data-lucide="server" class="w-4 h-4"></i>
+          <span>FastAPI Backend Code</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Stat Cards Overview Banner -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-dark-card border border-dark-border p-4 rounded-xl shadow-sm hover:border-gray-700 transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Catalog</span>
+          <div class="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+            <i data-lucide="box" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <p id="stat-total" class="text-2xl font-bold text-white mt-2">0</p>
+        <p class="text-xs text-gray-500 mt-1">Local database items</p>
+      </div>
+
+      <div class="bg-dark-card border border-dark-border p-4 rounded-xl shadow-sm hover:border-gray-700 transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Unpublished Drafts</span>
+          <div class="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
+            <i data-lucide="edit-3" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <p id="stat-drafts" class="text-2xl font-bold text-amber-400 mt-2">0</p>
+        <p class="text-xs text-gray-500 mt-1">Awaiting validation</p>
+      </div>
+
+      <div class="bg-dark-card border border-dark-border p-4 rounded-xl shadow-sm hover:border-gray-700 transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Validated Ready</span>
+          <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <p id="stat-ready" class="text-2xl font-bold text-emerald-400 mt-2">0</p>
+        <p class="text-xs text-gray-500 mt-1">Queued for automated listing</p>
+      </div>
+
+      <div class="bg-dark-card border border-dark-border p-4 rounded-xl shadow-sm hover:border-gray-700 transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Flagged Errors</span>
+          <div class="p-2 bg-rose-500/10 text-rose-400 rounded-lg">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <p id="stat-invalid" class="text-2xl font-bold text-rose-400 mt-2">0</p>
+        <p class="text-xs text-gray-500 mt-1">Requires user attention</p>
+      </div>
+    </div>
+
+    <!-- TAB 1: PRODUCT CATALOG -->
+    <section id="tab-catalog" class="tab-content space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-dark-card p-4 rounded-xl border border-dark-border">
+        <!-- Search and Filter -->
+        <div class="flex flex-1 items-center space-x-3 w-full sm:w-auto">
+          <div class="relative flex-1 max-w-xs">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Search SKU or title..." class="w-full bg-dark-input border border-gray-800 text-sm text-gray-200 rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-brand-500 transition">
+          </div>
+          <select id="catalog-filter" onchange="renderCatalog()" class="bg-dark-input border border-gray-800 text-sm text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500 transition">
+            <option value="all">All Statuses</option>
+            <option value="draft">Drafts</option>
+            <option value="ready">Ready</option>
+            <option value="invalid">Invalid</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="runValidator(true)" class="inline-flex items-center space-x-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-400"></i>
+            <span>Validate Catalog</span>
+          </button>
+          <button onclick="resetSampleData()" class="inline-flex items-center space-x-1.5 px-3 py-2 bg-gray-800/60 hover:bg-gray-800 text-gray-400 hover:text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>Reload Samples</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Catalog Table -->
+      <div class="bg-dark-card border border-dark-border rounded-xl overflow-hidden shadow-lg">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300">
+            <thead class="bg-slate-900/90 text-xs uppercase text-gray-400 font-semibold border-b border-gray-800">
+              <tr>
+                <th class="px-4 py-3.5">SKU & Item</th>
+                <th class="px-4 py-3.5">Price</th>
+                <th class="px-4 py-3.5">Stock</th>
+                <th class="px-4 py-3.5">Status</th>
+                <th class="px-4 py-3.5">Validation Issues</th>
+                <th class="px-4 py-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="catalog-table-body" class="divide-y divide-gray-800/60">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="catalog-empty" class="hidden p-8 text-center text-gray-500">
+          <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-gray-600"></i>
+          <p>No products found in catalog.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CSV BULK IMPORTER -->
+    <section id="tab-importer" class="tab-content hidden space-y-6">
+      <div class="bg-dark-card border border-dark-border rounded-xl p-6">
+        <div class="max-w-xl">
+          <h2 class="text-lg font-bold text-white mb-1">Bulk Product CSV Importer</h2>
+          <p class="text-sm text-gray-400">Import hundreds of custom handmade product records directly into your local database.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <!-- Drop Area -->
+          <div id="drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="border-2 border-dashed border-gray-700 hover:border-brand-500 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-dark-input/40 transition cursor-pointer">
+            <div class="p-3 bg-brand-500/10 text-brand-400 rounded-full mb-3">
+              <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+            </div>
+            <p class="text-sm font-semibold text-gray-200">Drag & Drop your CSV file here</p>
+            <p class="text-xs text-gray-500 mt-1">or click to select file from computer</p>
+            <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+            <button onclick="document.getElementById('csv-file-input').click()" class="mt-4 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-xs font-medium rounded-lg border border-gray-700 transition">
+              Browse CSV File
+            </button>
+          </div>
+
+          <!-- Raw CSV Text Area -->
+          <div class="flex flex-col space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold uppercase text-gray-400">Paste Raw CSV Content</label>
+              <button onclick="loadCSVSampleText()" class="text-xs text-brand-400 hover:text-brand-300">Insert Example Template</button>
+            </div>
+            <textarea id="csv-text-input" rows="7" placeholder="sku,title,description,price,quantity,image_url&#10;HAND-101,Custom Leather Coaster Set,Hand-stitched leather coasters.,24.99,10,https://example.com/item1.jpg" class="w-full bg-dark-input border border-gray-800 rounded-xl p-3 text-xs font-mono text-gray-300 focus:outline-none focus:border-brand-500 transition"></textarea>
+            <button onclick="parseCSVText()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-medium text-xs rounded-lg shadow-md transition">
+              Parse & Import Text
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Import Preview Card -->
+      <div id="csv-preview-card" class="hidden bg-dark-card border border-dark-border rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-md font-bold text-white flex items-center space-x-2">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-400"></i>
+            <span>Parsed CSV Preview (<span id="parsed-count">0</span> items)</span>
+          </h3>
+          <button onclick="commitParsedCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg transition shadow-md">
+            Save Items to Catalog
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-300">
+            <thead class="bg-slate-900 text-gray-400 font-semibold uppercase">
+              <tr>
+                <th class="px-3 py-2">SKU</th>
+                <th class="px-3 py-2">Title</th>
+                <th class="px-3 py-2">Price</th>
+                <th class="px-3 py-2">Stock</th>
+                <th class="px-3 py-2">Description</th>
+              </tr>
+            </thead>
+            <tbody id="csv-preview-body" class="divide-y divide-gray-800">
+              <!-- Filled JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: MARKETPLACE VALIDATOR -->
+    <section id="tab-validator" class="tab-content hidden space-y-6">
+      <div class="bg-dark-card border border-dark-border rounded-xl p-6">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-gray-800">
+          <div>
+            <h2 class="text-lg font-bold text-white">eBay Marketplace Policy Validator</h2>
+            <p class="text-sm text-gray-400 mt-1">Pre-screens products against official eBay API schema limits before queuing for publication.</p>
+          </div>
+          <button onclick="runValidator(true)" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-brand-600/20 transition flex items-center space-x-2">
+            <i data-lucide="play" class="w-4 h-4"></i>
+            <span>Execute Full Validation Scan</span>
+          </button>
+        </div>
+
+        <!-- Validation Rules Card List -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+          <div class="p-4 bg-dark-input border border-gray-800 rounded-xl">
+            <div class="flex items-center space-x-2 text-indigo-400 font-semibold text-xs uppercase mb-1">
+              <i data-lucide="type" class="w-4 h-4"></i>
+              <span>Title Length Limit</span>
+            </div>
+            <p class="text-xs text-gray-400">Must not exceed <span class="text-white font-bold">80 characters</span>. Overlength titles fail API listing submission.</p>
+          </div>
+
+          <div class="p-4 bg-dark-input border border-gray-800 rounded-xl">
+            <div class="flex items-center space-x-2 text-emerald-400 font-semibold text-xs uppercase mb-1">
+              <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+              <span>Positive Pricing</span>
+            </div>
+            <p class="text-xs text-gray-400">Price must be greater than <span class="text-white font-bold">$0.00</span>. Prevents accidental free listing errors.</p>
+          </div>
+
+          <div class="p-4 bg-dark-input border border-gray-800 rounded-xl">
+            <div class="flex items-center space-x-2 text-amber-400 font-semibold text-xs uppercase mb-1">
+              <i data-lucide="package" class="w-4 h-4"></i>
+              <span>Inventory Threshold</span>
+            </div>
+            <p class="text-xs text-gray-400">Quantity must be at least <span class="text-white font-bold">1 unit</span> to create an active eBay Offer.</p>
+          </div>
+        </div>
+
+        <!-- Validation Results Section -->
+        <div class="mt-8">
+          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Validation Report Log</h3>
+          <div id="validator-results-list" class="space-y-3">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: EBAY JSON PAYLOAD GENERATOR -->
+    <section id="tab-json" class="tab-content hidden space-y-6">
+      <div class="bg-dark-card border border-dark-border rounded-xl p-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white">eBay REST API Payload Inspector</h2>
+            <p class="text-sm text-gray-400">Formats local database items into standard eBay Bulk Inventory API JSON structure.</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <label class="text-xs text-gray-400 font-medium">Select Product:</label>
+            <select id="json-item-select" onchange="updateJSONViewer()" class="bg-dark-input border border-gray-800 text-sm text-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500">
+              <!-- Populated JS -->
+            </select>
+          </div>
+        </div>
+
+        <!-- JSON Output Window -->
+        <div class="relative bg-slate-950 border border-gray-800 rounded-xl p-4 overflow-hidden">
+          <div class="flex items-center justify-between pb-3 border-b border-gray-800 mb-3 text-xs text-gray-400">
+            <span class="font-mono text-brand-400 flex items-center space-x-2">
+              <i data-lucide="file-json" class="w-4 h-4"></i>
+              <span>PUT /sell/inventory/v1/inventory_item/{sku}</span>
+            </span>
+            <button onclick="copyJSONPayload()" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded text-xs flex items-center space-x-1 transition border border-gray-700">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy JSON</span>
+            </button>
+          </div>
+          <pre id="json-code-block" class="font-mono text-xs text-emerald-400 overflow-x-auto p-2 leading-relaxed h-96">
+// Select an item above to generate formatted eBay JSON API request
+          </pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: AUTOMATED LISTING SCHEDULER -->
+    <section id="tab-scheduler" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Controls Sidebar -->
+        <div class="bg-dark-card border border-dark-border rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white mb-1">Execution Controls</h2>
+            <p class="text-xs text-gray-400 mb-6">Runs background loop to publish 'Ready' catalog items sequentially.</p>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold uppercase text-gray-400 mb-2">Release Frequency (Interval)</label>
+                <select id="schedule-interval" class="w-full bg-dark-input border border-gray-800 text-sm text-gray-200 rounded-lg p-2.5 focus:outline-none focus:border-brand-500">
+                  <option value="3">3 Seconds (Fast Debug)</option>
+                  <option value="5" selected>5 Seconds</option>
+                  <option value="10">10 Seconds</option>
+                  <option value="30">30 Seconds</option>
+                </select>
+              </div>
+
+              <div class="p-4 bg-dark-input border border-gray-800 rounded-xl text-center">
+                <span class="text-xs uppercase font-semibold text-gray-400 block mb-1">Next Listing Countdown</span>
+                <span id="countdown-timer" class="text-3xl font-mono font-bold text-brand-400">00:00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 space-y-2">
+            <button id="btn-start-scheduler" onclick="startScheduler()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-lg shadow-lg shadow-emerald-600/20 transition flex items-center justify-center space-x-2">
+              <i data-lucide="play" class="w-4 h-4"></i>
+              <span>Start Automated Queue</span>
+            </button>
+            <button id="btn-stop-scheduler" onclick="stopScheduler()" disabled class="w-full py-3 bg-rose-600/50 hover:bg-rose-600 text-white font-bold text-sm rounded-lg transition flex items-center justify-center space-x-2 opacity-50 cursor-not-allowed">
+              <i data-lucide="square" class="w-4 h-4"></i>
+              <span>Pause Queue Engine</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal Output Window -->
+        <div class="lg:col-span-2 bg-slate-950 border border-gray-800 rounded-xl p-4 flex flex-col h-[480px]">
+          <div class="flex items-center justify-between pb-3 border-b border-gray-800 text-xs text-gray-400">
+            <span class="font-mono flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              <span class="text-gray-300 font-semibold">Listing Automation Console Terminal</span>
+            </span>
+            <button onclick="clearTerminalLogs()" class="text-gray-500 hover:text-gray-300 text-xs">Clear Log</button>
+          </div>
+          
+          <!-- Terminal Output Body -->
+          <div id="terminal-logs" class="flex-1 font-mono text-xs text-gray-300 overflow-y-auto pt-3 space-y-1.5 terminal-scroll">
+            <div class="text-gray-500">[System] Automation Engine initialized. Ready to launch queue.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 6: FASTAPI BACKEND CODE -->
+    <section id="tab-fastapi" class="tab-content hidden space-y-6">
+      <div class="bg-dark-card border border-dark-border rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white">Python FastAPI Production Script</h2>
+            <p class="text-sm text-gray-400">Plug this full backend script into your Codespace `main.py` file to serve REST API endpoints for this dashboard.</p>
+          </div>
+          <button onclick="copyFastAPICode()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-500 text-white font-medium text-xs rounded-lg transition flex items-center space-x-1.5">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span>Copy Code</span>
+          </button>
+        </div>
+
+        <div class="bg-slate-950 border border-gray-800 rounded-xl p-4 overflow-hidden">
+          <pre id="fastapi-code-block" class="font-mono text-xs text-indigo-300 overflow-x-auto p-2 leading-relaxed h-[500px]">
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from pydantic import BaseModel
+from typing import List, Optional
+import sqlite3
+import requests
+import json
+
+app = FastAPI(title="eBay Automation Engine API")
+
+# Database setup helper
+def get_db_connection():
+    conn = sqlite3.connect("catalog.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+class ProductSchema(BaseModel):
+    sku: str
+    title: str
+    description: Optional[str] = ""
+    price: float
+    quantity: int
+    image_url: Optional[str] = ""
+
+@app.get("/api/products")
+def list_products():
+    conn = get_db_connection()
+    products = conn.execute("SELECT * FROM products").fetchall()
+    conn.close()
+    return [dict(p) for p in products]
+
+@app.post("/api/products")
+def create_product(prod: ProductSchema):
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO products (sku, title, description, price, quantity, image_url, status) VALUES (?, ?, ?, ?, ?, ?, 'draft')",
+            (prod.sku, prod.title, prod.description, prod.price, prod.quantity, prod.image_url)
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="SKU already exists")
+    finally:
+        conn.close()
+    return {"status": "success", "message": f"Product {prod.sku} created"}
+
+@app.post("/api/validate")
+def validate_catalog():
+    conn = get_db_connection()
+    products = conn.execute("SELECT * FROM products").fetchall()
+    results = {"valid_count": 0, "invalid_count": 0}
+
+    for prod in products:
+        issues = []
+        if len(prod["title"]) > 80:
+            issues.append("Title exceeds 80 chars")
+        if prod["price"] <= 0:
+            issues.append("Price must be > 0")
+        if prod["quantity"] < 1:
+            issues.append("Quantity must be >= 1")
+
+        new_status = "invalid" if issues else "ready"
+        conn.execute("UPDATE products SET status = ? WHERE sku = ?", (new_status, prod["sku"]))
+        if issues:
+            results["invalid_count"] += 1
+        else:
+            results["valid_count"] += 1
+
+    conn.commit()
+    conn.close()
+    return results
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+          </pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ADD PRODUCT MODAL -->
+  <div id="add-product-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-dark-border rounded-xl max-w-lg w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-4 border-b border-gray-800">
+        <h3 class="text-md font-bold text-white flex items-center space-x-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-brand-400"></i>
+          <span>Add Custom Product to Catalog</span>
+        </h3>
+        <button onclick="closeModal('add-product-modal')" class="text-gray-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleManualAddProduct(event)" class="mt-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">SKU *</label>
+            <input type="text" id="modal-sku" required placeholder="HAND-005" class="w-full bg-dark-input border border-gray-800 rounded-lg p-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Price ($) *</label>
+            <input type="number" step="0.01" id="modal-price" required placeholder="29.99" class="w-full bg-dark-input border border-gray-800 rounded-lg p-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Product Title *</label>
+          <input type="text" id="modal-title" required placeholder="Handcrafted Oak Keepsake Box" class="w-full bg-dark-input border border-gray-800 rounded-lg p-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+          <span class="text-[10px] text-gray-500">Max 80 characters recommended for eBay compliance.</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Quantity Stock *</label>
+            <input type="number" id="modal-qty" required value="5" min="0" class="w-full bg-dark-input border border-gray-800 rounded-lg p-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Image URL</label>
+            <input type="url" id="modal-image" placeholder="https://..." class="w-full bg-dark-input border border-gray-800 rounded-lg p-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Description</label>
+          <textarea id="modal-desc" rows="3" placeholder="Enter item specs and details..." class="w-full bg-dark-input border border-gray-800 rounded-lg p-2.5 text-xs text-white focus:border-brand-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-gray-800">
+          <button type="button" onclick="closeModal('add-product-modal')" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-lg shadow-md">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script>
+    // Initial Application State (Mock Catalog Data)
+    let products = [
+      {
+        id: 1,
+        sku: "HAND-001",
+        title: "Handcrafted Solid Oak Wooden Salad Bowl",
+        description: "Solids oak wood bowl hand-turned and finished with natural food-safe beeswax.",
+        price: 29.99,
+        quantity: 8,
+        image_url: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=300",
+        status: "draft",
+        issues: []
+      },
+      {
+        id: 2,
+        sku: "HAND-002",
+        title: "Custom Refillable Leather Journal Notebook A5",
+        description: "Rustic full-grain leather journal cover with antique brass lock hardware.",
+        price: 19.99,
+        quantity: 15,
+        image_url: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=300",
+        status: "ready",
+        issues: []
+      },
+      {
+        id: 3,
+        sku: "HAND-003",
+        title: "Hand-Poured Organic Soy Candle with Pure Lavender Essential Oils Long Burning 40 Hours Gift Set Box",
+        description: "100% soy wax hand poured in small batches into amber glass jars.",
+        price: 14.50,
+        quantity: 0,
+        image_url: "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=300",
+        status: "invalid",
+        issues: ["Title exceeds 80-character limit (102 chars)", "Quantity must be at least 1"]
+      },
+      {
+        id: 4,
+        sku: "HAND-004",
+        title: "Handmade Ceramic Coffee Mug",
+        description: "Artisan speckled pottery mug, 12 oz capacity.",
+        price: -5.00,
+        quantity: 10,
+        image_url: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=300",
+        status: "invalid",
+        issues: ["Price must be greater than $0.00"]
+      }
+    ];
+
+    let parsedCSVBuffer = [];
+    let schedulerTimer = null;
+    let schedulerSecondsLeft = 0;
+    let isSchedulerRunning = false;
+
+    // Page Load Setup
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      updateStats();
+      renderCatalog();
+      populateJSONSelect();
+      runValidator(false);
+    });
+
+    // Navigation Tab Switcher
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+      document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active-tab"));
+      
+      document.getElementById(`tab-${tabId}`).classList.remove("hidden");
+      document.getElementById(`tab-btn-${tabId}`).classList.add("active-tab");
+
+      if (tabId === 'json') populateJSONSelect();
+    }
+
+    // Modal Control Functions
+    function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
+    function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+
+    // Stat Cards Refresh
+    function updateStats() {
+      document.getElementById("stat-total").innerText = products.length;
+      document.getElementById("stat-drafts").innerText = products.filter(p => p.status === 'draft').length;
+      document.getElementById("stat-ready").innerText = products.filter(p => p.status === 'ready').length;
+      document.getElementById("stat-invalid").innerText = products.filter(p => p.status === 'invalid').length;
+    }
+
+    // Render Product Catalog Table
+    function renderCatalog() {
+      const tbody = document.getElementById("catalog-table-body");
+      const emptyMsg = document.getElementById("catalog-empty");
+      const searchQuery = document.getElementById("catalog-search").value.toLowerCase();
+      const filterValue = document.getElementById("catalog-filter").value;
+
+      tbody.innerHTML = "";
+
+      const filtered = products.filter(p => {
+        const matchesSearch = p.sku.toLowerCase().includes(searchQuery) || p.title.toLowerCase().includes(searchQuery);
+        const matchesFilter = filterValue === "all" || p.status === filterValue;
+        return matchesSearch && matchesFilter;
+      });
+
+      if (filtered.length === 0) {
+        emptyMsg.classList.remove("hidden");
+        return;
+      } else {
+        emptyMsg.classList.add("hidden");
+      }
+
+      filtered.forEach(p => {
+        let badgeStyle = "bg-gray-800 text-gray-400 border-gray-700";
+        if (p.status === "ready") badgeStyle = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+        if (p.status === "invalid") badgeStyle = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+        if (p.status === "published") badgeStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-800/40 transition border-b border-gray-800/40";
+        tr.innerHTML = `
+          <td class="px-4 py-3">
+            <div class="flex items-center space-x-3">
+              ${p.image_url ? `<img src="${p.image_url}" class="w-9 h-9 rounded-lg object-cover border border-gray-800">` : `<div class="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center text-xs text-gray-500 font-mono">NO IMG</div>`}
+              <div>
+                <span class="font-mono text-xs font-semibold text-brand-400 block">${p.sku}</span>
+                <span class="text-xs text-gray-200 line-clamp-1 max-w-xs" title="${p.title}">${p.title}</span>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 font-mono text-xs font-semibold text-gray-200">$${Number(p.price).toFixed(2)}</td>
+          <td class="px-4 py-3 font-mono text-xs text-gray-300">${p.quantity}</td>
+          <td class="px-4 py-3">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border uppercase tracking-wider ${badgeStyle}">
+              ${p.status}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-xs">
+            ${p.issues && p.issues.length > 0 ? 
+              `<span class="text-rose-400 flex items-center space-x-1" title="${p.issues.join(' | ')}">
+                 <i data-lucide="alert-circle" class="w-3.5 h-3.5 inline"></i>
+                 <span>${p.issues.length} issue(s)</span>
+               </span>` : 
+              `<span class="text-gray-500">—</span>`}
+          </td>
+          <td class="px-4 py-3 text-right space-x-1">
+            <button onclick="deleteProduct(${p.id})" class="p-1.5 hover:bg-rose-500/10 text-gray-400 hover:text-rose-400 rounded transition" title="Delete">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+      updateStats();
+    }
+
+    // Manual Product Form Handler
+    function handleManualAddProduct(e) {
+      e.preventDefault();
+      const newProduct = {
+        id: Date.now(),
+        sku: document.getElementById("modal-sku").value.trim(),
+        title: document.getElementById("modal-title").value.trim(),
+        price: parseFloat(document.getElementById("modal-price").value),
+        quantity: parseInt(document.getElementById("modal-qty").value),
+        image_url: document.getElementById("modal-image").value.trim(),
+        description: document.getElementById("modal-desc").value.trim(),
+        status: "draft",
+        issues: []
+      };
+
+      products.unshift(newProduct);
+      closeModal("add-product-modal");
+      renderCatalog();
+      runValidator(false);
+      showToast("Product added to draft catalog", "success");
+      e.target.reset();
+    }
+
+    function deleteProduct(id) {
+      products = products.filter(p => p.id !== id);
+      renderCatalog();
+      runValidator(false);
+      showToast("Product deleted from database", "info");
+    }
+
+    function resetSampleData() {
+      location.reload();
+    }
+
+    // Data Validator Logic
+    function runValidator(userTriggered = true) {
+      let validCount = 0;
+      let invalidCount = 0;
+
+      products.forEach(p => {
+        p.issues = [];
+        if (!p.title || p.title.trim().length === 0) {
+          p.issues.push("Title is required");
+        } else if (p.title.length > 80) {
+          p.issues.push(`Title exceeds 80-character limit (${p.title.length} chars)`);
+        }
+
+        if (isNaN(p.price) || p.price <= 0) {
+          p.issues.push("Price must be greater than $0.00");
+        }
+
+        if (isNaN(p.quantity) || p.quantity < 1) {
+          p.issues.push("Quantity must be at least 1 unit");
+        }
+
+        if (p.issues.length > 0) {
+          p.status = "invalid";
+          invalidCount++;
+        } else {
+          if (p.status !== "published") p.status = "ready";
+          validCount++;
+        }
+      });
+
+      renderCatalog();
+      renderValidatorReport();
+
+      if (userTriggered) {
+        showToast(`Validation scan complete: ${validCount} passed, ${invalidCount} flagged`, invalidCount > 0 ? "warning" : "success");
+      }
+    }
+
+    function renderValidatorReport() {
+      const container = document.getElementById("validator-results-list");
+      container.innerHTML = "";
+
+      const flagged = products.filter(p => p.status === 'invalid');
+      if (flagged.length === 0) {
+        container.innerHTML = `
+          <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-400 flex items-center space-x-2">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>All items in your catalog satisfy eBay marketplace rules! Ready for automated queue.</span>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      flagged.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "p-3.5 bg-dark-input border border-rose-500/20 rounded-xl text-xs flex flex-col md:flex-row md:items-center justify-between gap-2";
+        div.innerHTML = `
+          <div>
+            <span class="font-mono text-rose-400 font-semibold uppercase">[${p.sku}]</span>
+            <span class="text-gray-300 font-medium ml-2">${p.title}</span>
+          </div>
+          <div class="text-rose-400 text-[11px] font-mono">
+            ${p.issues.join(" • ")}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    // CSV Parsing Logic
+    function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add("border-brand-500"); }
+    function handleDragLeave(e) { e.currentTarget.classList.remove("border-brand-500"); }
+    function handleDrop(e) {
+      e.preventDefault();
+      const files = e.dataTransfer.files;
+      if (files.length) parseCSVFile(files[0]);
+    }
+    function handleFileSelect(e) {
+      if (e.target.files.length) parseCSVFile(e.target.files[0]);
+    }
+
+    function parseCSVFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => processCSVString(e.target.result);
+      reader.readAsText(file);
+    }
+
+    function loadCSVSampleText() {
+      document.getElementById("csv-text-input").value = 
+`sku,title,description,price,quantity,image_url
+HAND-101,Custom Leather Coaster Set,Hand-stitched full grain leather coasters.,24.99,10,https://example.com/c1.jpg
+HAND-102,Engraved Brass Compass with Leather Pouch,Handcrafted vintage style magnetic compass gift set.,34.50,4,https://example.com/c2.jpg`;
+    }
+
+    function parseCSVText() {
+      const text = document.getElementById("csv-text-input").value;
+      if (!text.trim()) {
+        showToast("Please enter CSV content to parse", "warning");
+        return;
+      }
+      processCSVString(text);
+    }
+
+    function processCSVString(csvText) {
+      const lines = csvText.trim().split("\n");
+      if (lines.length < 2) {
+        showToast("Invalid CSV format", "error");
+        return;
+      }
+
+      parsedCSVBuffer = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",");
+        if (cols.length >= 4) {
+          parsedCSVBuffer.push({
+            id: Date.now() + i,
+            sku: cols[0]?.trim(),
+            title: cols[1]?.trim(),
+            description: cols[2]?.trim(),
+            price: parseFloat(cols[3]),
+            quantity: parseInt(cols[4] || 1),
+            image_url: cols[5]?.trim() || "",
+            status: "draft",
+            issues: []
+          });
+        }
+      }
+
+      document.getElementById("parsed-count").innerText = parsedCSVBuffer.length;
+      const tbody = document.getElementById("csv-preview-body");
+      tbody.innerHTML = "";
+
+      parsedCSVBuffer.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2 font-mono text-brand-400">${item.sku}</td>
+          <td class="px-3 py-2 text-gray-200">${item.title}</td>
+          <td class="px-3 py-2 font-mono">$${item.price}</td>
+          <td class="px-3 py-2 font-mono">${item.quantity}</td>
+          <td class="px-3 py-2 text-gray-400 truncate max-w-xs">${item.description}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("csv-preview-card").classList.remove("hidden");
+      showToast(`Parsed ${parsedCSVBuffer.length} items from CSV`, "success");
+    }
+
+    function commitParsedCSV() {
+      if (parsedCSVBuffer.length === 0) return;
+      products = [...parsedCSVBuffer, ...products];
+      parsedCSVBuffer = [];
+      document.getElementById("csv-preview-card").classList.add("hidden");
+      renderCatalog();
+      runValidator(false);
+      switchTab("catalog");
+      showToast("Bulk items imported into database catalog", "success");
+    }
+
+    // JSON Payload Viewer
+    function populateJSONSelect() {
+      const select = document.getElementById("json-item-select");
+      select.innerHTML = "";
+      products.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.innerText = `${p.sku} - ${p.title.substring(0, 30)}...`;
+        select.appendChild(opt);
+      });
+      updateJSONViewer();
+    }
+
+    function updateJSONViewer() {
+      const selectedId = parseInt(document.getElementById("json-item-select").value);
+      const product = products.find(p => p.id === selectedId) || products[0];
+
+      if (!product) {
+        document.getElementById("json-code-block").innerText = "// No product selected";
+        return;
+      }
+
+      const ebayPayload = {
+        product: {
+          title: product.title,
+          description: product.description,
+          aspects: {
+            "Brand": ["Unbranded / Handmade"],
+            "Type": ["Custom Craft"]
+          },
+          imageUrls: product.image_url ? [product.image_url] : []
+        },
+        condition: "NEW",
+        availability: {
+          shipToLocationAvailability: {
+            quantity: product.quantity
+          }
+        },
+        offers: [
+          {
+            marketplaceId: "EBAY_US",
+            format: "FIXED_PRICE",
+            pricingSummary: {
+              price: {
+                value: product.price.toFixed(2),
+                currency: "USD"
+              }
+            }
+          }
+        ]
+      };
+
+      document.getElementById("json-code-block").innerText = JSON.stringify(ebayPayload, null, 2);
+    }
+
+    function copyJSONPayload() {
+      const text = document.getElementById("json-code-block").innerText;
+      copyToClipboard(text);
+      showToast("JSON Payload copied to clipboard", "info");
+    }
+
+    function copyFastAPICode() {
+      const text = document.getElementById("fastapi-code-block").innerText;
+      copyToClipboard(text);
+      showToast("FastAPI Backend Code copied to clipboard", "info");
+    }
+
+    // Automated Scheduler Loop Simulator
+    function startScheduler() {
+      if (isSchedulerRunning) return;
+      isSchedulerRunning = true;
+
+      document.getElementById("btn-start-scheduler").disabled = true;
+      document.getElementById("btn-start-scheduler").classList.add("opacity-50", "cursor-not-allowed");
+      document.getElementById("btn-stop-scheduler").disabled = false;
+      document.getElementById("btn-stop-scheduler").classList.remove("opacity-50", "cursor-not-allowed");
+
+      const badge = document.getElementById("scheduler-badge");
+      const pulse = document.getElementById("scheduler-pulse");
+      const text = document.getElementById("scheduler-status-text");
+
+      badge.classList.remove("hidden");
+      pulse.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+      text.innerText = "Scheduler Active";
+      text.className = "text-emerald-400 font-semibold";
+
+      appendTerminalLog("[System] Automated Listing Scheduler initialized.", "text-emerald-400");
+      
+      const intervalSec = parseInt(document.getElementById("schedule-interval").value);
+      schedulerSecondsLeft = intervalSec;
+
+      schedulerTimer = setInterval(() => {
+        schedulerSecondsLeft--;
+        document.getElementById("countdown-timer").innerText = `00:${schedulerSecondsLeft.toString().padStart(2, '0')}`;
+
+        if (schedulerSecondsLeft <= 0) {
+          executeNextQueueItem();
+          schedulerSecondsLeft = parseInt(document.getElementById("schedule-interval").value);
+        }
+      }, 1000);
+
+      showToast("Listing Queue Automation Engine Started", "success");
+    }
+
+    function stopScheduler() {
+      if (!isSchedulerRunning) return;
+      isSchedulerRunning = false;
+      clearInterval(schedulerTimer);
+
+      document.getElementById("btn-start-scheduler").disabled = false;
+      document.getElementById("btn-start-scheduler").classList.remove("opacity-50", "cursor-not-allowed");
+      document.getElementById("btn-stop-scheduler").disabled = true;
+      document.getElementById("btn-stop-scheduler").classList.add("opacity-50", "cursor-not-allowed");
+
+      const pulse = document.getElementById("scheduler-pulse");
+      const text = document.getElementById("scheduler-status-text");
+
+      pulse.className = "w-2 h-2 rounded-full bg-gray-500";
+      text.innerText = "Scheduler Paused";
+      text.className = "text-gray-400";
+
+      document.getElementById("countdown-timer").innerText = "00:00";
+      appendTerminalLog("[System] Scheduler suspended by user.", "text-amber-400");
+      showToast("Listing Queue Paused", "warning");
+    }
+
+    function executeNextQueueItem() {
+      const readyItem = products.find(p => p.status === 'ready');
+
+      if (!readyItem) {
+        appendTerminalLog("[Queue] No 'Ready' items in catalog queue. Sleeping...", "text-gray-500");
+        return;
+      }
+
+      appendTerminalLog(`[API] Executing eBay POST offer for SKU '${readyItem.sku}'...`, "text-brand-400");
+      
+      setTimeout(() => {
+        readyItem.status = 'published';
+        renderCatalog();
+        appendTerminalLog(`[Success] SKU '${readyItem.sku}' published to eBay live marketplace!`, "text-emerald-400");
+        showToast(`Item ${readyItem.sku} published live!`, "success");
+      }, 800);
+    }
+
+    function appendTerminalLog(msg, colorClass = "text-gray-300") {
+      const container = document.getElementById("terminal-logs");
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement("div");
+      div.className = `${colorClass} flex items-start space-x-2`;
+      div.innerHTML = `<span class="text-gray-600 font-mono text-[10px]">[${time}]</span> <span>${msg}</span>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function clearTerminalLogs() {
+      document.getElementById("terminal-logs").innerHTML = `<div class="text-gray-500">[System] Terminal output cleared.</div>`;
+    }
+
+    // Helper: Copy Text
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+
+    // Toast Notifications
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      
+      let border = "border-brand-500/30 bg-slate-900";
+      let icon = "info";
+      let iconColor = "text-brand-400";
+
+      if (type === "success") {
+        border = "border-emerald-500/30 bg-slate-900";
+        icon = "check-circle";
+        iconColor = "text-emerald-400";
+      } else if (type === "warning") {
+        border = "border-amber-500/30 bg-slate-900";
+        icon = "alert-triangle";
+        iconColor = "text-amber-400";
+      } else if (type === "error") {
+        border = "border-rose-500/30 bg-slate-900";
+        icon = "alert-circle";
+        iconColor = "text-rose-400";
+      }
+
+      toast.className = `p-3 rounded-xl border ${border} shadow-xl text-xs text-white flex items-center space-x-2.5 transition transform duration-300 pointer-events-auto`;
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-4 h-4 ${iconColor}"></i>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
